@@ -4,17 +4,13 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class Guard : MonoBehaviour
+public class Guard : Character
 {
-    private int health = 50;
-    private int strength = 10;
     private Vector3 patrolPosition;
+    private Player player;
 
-    private float speed = 2f;
-    private float attackDelay = 1.5f;
-    private float range = 4f;
+    private float range = 5f;
     private float attackRange = 1f;
-    private float attackTimer = 0f;
 
     private bool stunned = false;
 
@@ -25,20 +21,31 @@ public class Guard : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         patrolPosition = this.transform.position;
+        speed = 2f;
+        attackDelay = 1.5f;
+        lastAttack = 0f;
+        life = 50;
+        strength = 10;
     }
 
     private void Update()
     {
+        if (stunned)
+            return;
+
         Transform playerFound = this.SearchForPlayer();
 
-        if (playerFound != null && !stunned)
-            this.MoveToPlayer(playerFound);
-        else if (!stunned && this.transform.position.x == patrolPosition.x)
+        if (playerFound != null)
+        {
+            player = playerFound.gameObject.GetComponent<Player>();
+            this.MoveTo(playerFound.position);
+        }
+        else if (this.transform.position.x == patrolPosition.x)
             this.Patrol();
         else
             this.ReturnToPatrol();
         
-        attackTimer += Time.deltaTime;
+        lastAttack += Time.deltaTime;
     }
     private Transform SearchForPlayer()
     {
@@ -49,10 +56,10 @@ public class Guard : MonoBehaviour
         
         return null;
     }
-    private void Attack(Player player)
+    protected override void Attack()
     {
         player.TakeDamage(this.strength);
-        attackTimer = 0f;
+        lastAttack = 0f;
     }
 
     private void Patrol()
@@ -65,24 +72,24 @@ public class Guard : MonoBehaviour
         rb.velocity = throwDirection;
     }
 
-    private void MoveToPlayer(Transform playerPos)
+    protected override void MoveTo(Vector3 direction)
     {
-        transform.position = Vector2.MoveTowards(transform.position, playerPos.position, speed * Time.deltaTime);
-
-        if (Vector2.Distance(this.transform.position, playerPos.position) <= attackRange && attackTimer > attackDelay)
-            this.Attack(playerPos.gameObject.GetComponent<Player>());
+        transform.position = Vector2.MoveTowards(transform.position, direction, speed * Time.deltaTime);
+        
+        if (Vector2.Distance(this.transform.position, direction) <= attackRange && lastAttack > attackDelay)
+            this.Attack();
     }
     private void ReturnToPatrol()
     {
         transform.position = Vector2.MoveTowards(transform.position, patrolPosition, speed * Time.deltaTime);
     }
 
-    private void TakeDamage(int damage)
+    public override void TakeDamage(int damage)
     {
         this.StartCoroutine(Stun());
-        health -= damage;
+        this.life -= damage;
         
-        if(health <= 0)
+        if(this.life <= 0)
             Destroy(gameObject);
     }
 
@@ -98,15 +105,8 @@ public class Guard : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision != null && collision.gameObject.layer == 3)
-            collision.gameObject.GetComponent<Player>().TakeDamage(10);        
+            collision.gameObject.GetComponent<Player>().TakeDamage(this.strength);        
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision != null && collision.gameObject.tag == "Handaxe")
-        {
-            this.TakeDamage(10);
-            Destroy(collision.gameObject);
-        }
-    }
+
 }

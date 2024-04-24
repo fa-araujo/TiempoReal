@@ -2,13 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player : Character
 {
-    private int life = 100;
-
-    private float gridSize = 1f;
-
-    private float speed = 5.0f;
 
     private const KeyCode forwardKey = KeyCode.W;
     private const KeyCode leftKey = KeyCode.A;
@@ -17,80 +12,83 @@ public class Player : MonoBehaviour
 
     [SerializeField] GameObject handAxePrefab;
     private BoxCollider2D boxCollider;
-    private float attackDelay = 1f;
-    private float lastAttack = 2f;
 
     private void Start()
     {
+        this.life = 100;
+        this.attackDelay = 1f;
+        this.lastAttack = 2f;
+        this.speed = 5.0f;
+        this.strength = 10;
         boxCollider = GetComponent<BoxCollider2D>();
     }
     void Update()
     {
-        this.Move();
+        this.MoveTo(new Vector3());
 
         if (AnyArrowDown() && lastAttack > attackDelay)
-            this.ThrowAxe();
+            this.Attack();
 
         lastAttack += Time.deltaTime;
     }
 
-    private bool AnyArrowDown() { return (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.RightArrow)); }
+    private bool AnyArrowDown() { return (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.RightArrow)); }
    
-    private void ThrowAxe()
+    protected override void Attack()
     {
         Vector2 throwDirection = new Vector2();
         Vector3 axeOffSet = this.transform.position;
 
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.UpArrow))
         {
-            throwDirection = Vector2.up * gridSize * 3;
+            throwDirection = Vector2.up * speed;
             axeOffSet.y += (this.boxCollider.size.y / 2);
         }
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        else if (Input.GetKey(KeyCode.LeftArrow))
         {
-            throwDirection = Vector2.left * gridSize * 3;
+            throwDirection = Vector2.left * speed;
             axeOffSet.x -= (this.boxCollider.size.x / 2);
         }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        else if (Input.GetKey(KeyCode.DownArrow))
         {
-            throwDirection = Vector2.down * gridSize * 3;
+            throwDirection = Vector2.down * speed;
             axeOffSet.y -= (this.boxCollider.size.y / 2);
         }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        else if (Input.GetKey(KeyCode.RightArrow))
         {
-            throwDirection = Vector2.right * gridSize * 3;
+            throwDirection = Vector2.right * speed;
             axeOffSet.x += (this.boxCollider.size.x / 2);
         }
-
-
+        
         GameObject handAxe = Instantiate(handAxePrefab, axeOffSet, transform.rotation);
 
-        if(Input.GetKeyDown(KeyCode.LeftArrow))
+        if(Input.GetKey(KeyCode.LeftArrow))
             handAxe.GetComponent<SpriteRenderer>().flipX = true;
 
+        handAxe.GetComponent<Handaxe>().SetDamage(this.strength);
         Rigidbody2D axeRb = handAxe.GetComponent<Rigidbody2D>();
         axeRb.velocity = throwDirection;
 
         lastAttack = 0;
     }
 
-    private void Move()
+    protected override void MoveTo(Vector3 direction)
     {
-        Vector2 direction = transform.position;
+        direction = transform.position;
 
         if (Input.GetKey(forwardKey))
-            direction += Vector2.up * gridSize;
+            direction += Vector3.up;
         else if (Input.GetKey(leftKey))
-            direction += Vector2.left * gridSize;
+            direction += Vector3.left;
         else if (Input.GetKey(backKey))
-            direction += Vector2.down * gridSize;
+            direction += Vector3.down;
         else if (Input.GetKey(rightKey))
-            direction += Vector2.right * gridSize;
+            direction += Vector3.right;
 
         transform.position = Vector2.MoveTowards(transform.position, direction, Time.deltaTime * speed);
     }
 
-    public void TakeDamage(int damage)
+    public override void TakeDamage(int damage)
     {
         life -= damage;
     }

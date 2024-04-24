@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1654462695848466020}
   - component: {fileID: 3574564897489974377}
   - component: {fileID: 4636846058176258152}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Guard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28,7 +28,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6360948609857165174}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -112,8 +112,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 444669217
-  m_SortingLayer: 3
+  m_SortingLayerID: -623114891
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: -6856460, guid: 22405688aeb69cc44a3d985bd98f447e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

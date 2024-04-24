@@ -5,20 +5,27 @@ using UnityEngine;
 public class Handaxe : MonoBehaviour
 {
     private float timeSinceThrown = 0;
-
-    // Update is called once per frame
+    private int _damage;
+    
     void Update()
     {
         timeSinceThrown += Time.deltaTime;
 
-        if(timeSinceThrown > 2f)
+        if(timeSinceThrown > 1f)
             Destroy(gameObject);
     }
+
+    public void SetDamage(int damage) { _damage = damage; }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision != null && collision.gameObject.layer == 7)
             Destroy(gameObject);
-        
+
+        if (collision != null && collision.gameObject.layer == 8)
+        {
+            collision.GetComponent<Character>().TakeDamage(_damage);
+            Destroy(gameObject);
+        }
     }
 }

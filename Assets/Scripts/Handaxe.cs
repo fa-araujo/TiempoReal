@@ -6,13 +6,16 @@ public class Handaxe : MonoBehaviour
 {
     private float timeSinceThrown = 0;
     private int _damage;
-    
+
     void Update()
     {
         timeSinceThrown += Time.deltaTime;
 
         if(timeSinceThrown > 1f)
             Destroy(gameObject);
+
+
+        transform.Rotate(Vector3.back * Time.deltaTime * 360f);
     }
 
     public void SetDamage(int damage) { _damage = damage; }

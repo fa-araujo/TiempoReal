@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.RuleTile.TilingRuleOutput;
 
 public class Player : Character
 {
@@ -11,7 +13,14 @@ public class Player : Character
     private const KeyCode rightKey = KeyCode.D;
 
     [SerializeField] GameObject handAxePrefab;
+    [SerializeField] GameObject lifeBar;
     private BoxCollider2D boxCollider;
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
+
+    private Vector3 axeOffSet;
+    private Vector2 throwDirection;
+    private float spinDamageDelay = 2f;
 
     private void Start()
     {
@@ -20,15 +29,27 @@ public class Player : Character
         this.lastAttack = 2f;
         this.speed = 5.0f;
         this.strength = 10;
+
+        animator = GetComponent<Animator>();
         boxCollider = GetComponent<BoxCollider2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
     void Update()
     {
+        if (Input.GetKey(KeyCode.Space))
+            this.Spin();
+        else if (Input.GetKeyUp(KeyCode.Space))
+            animator.SetBool("isSpinning", false);
+
         this.MoveTo(new Vector3());
 
         if (AnyArrowDown() && lastAttack > attackDelay)
+        {
             this.Attack();
+            animator.SetTrigger("Attack");
+        }
 
+        spinDamageDelay += Time.deltaTime;
         lastAttack += Time.deltaTime;
     }
 
@@ -36,8 +57,9 @@ public class Player : Character
    
     protected override void Attack()
     {
-        Vector2 throwDirection = new Vector2();
-        Vector3 axeOffSet = this.transform.position;
+        throwDirection = new Vector2();
+        axeOffSet = this.transform.position;
+        this.spriteRenderer.flipX = false;
 
         if (Input.GetKey(KeyCode.UpArrow))
         {
@@ -48,6 +70,7 @@ public class Player : Character
         {
             throwDirection = Vector2.left * speed;
             axeOffSet.x -= (this.boxCollider.size.x / 2);
+            this.spriteRenderer.flipX = true;
         }
         else if (Input.GetKey(KeyCode.DownArrow))
         {
@@ -59,38 +82,84 @@ public class Player : Character
             throwDirection = Vector2.right * speed;
             axeOffSet.x += (this.boxCollider.size.x / 2);
         }
-        
-        GameObject handAxe = Instantiate(handAxePrefab, axeOffSet, transform.rotation);
 
-        if(Input.GetKey(KeyCode.LeftArrow))
-            handAxe.GetComponent<SpriteRenderer>().flipX = true;
+        lastAttack = 0;
+    }
+
+    private void Spin()
+    {
+        animator.SetBool("isSpinning", true);
+
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(transform.position, spriteRenderer.size.x, LayerMask.GetMask("Enemies"));
+
+        foreach (Collider2D enemyCollider in enemies)
+        {
+            Rigidbody2D enemyRigidbody = enemyCollider.attachedRigidbody;
+
+            if (enemyRigidbody != null){
+                Vector2 direction = (enemyCollider.transform.position - transform.position).normalized;
+
+                enemyRigidbody.AddForce(direction, ForceMode2D.Impulse);
+
+                if (spinDamageDelay > 2){
+                    enemyCollider.gameObject.GetComponent<Character>().TakeDamage(strength);
+                    spinDamageDelay = 0;
+                }
+            }
+        }
+    }
+
+    private void ThrowAxe()
+    {
+        GameObject handAxe = Instantiate(handAxePrefab, axeOffSet, transform.rotation);
+        if (Input.GetKey(KeyCode.LeftArrow))
+                handAxe.GetComponent<SpriteRenderer>().flipX = true;
 
         handAxe.GetComponent<Handaxe>().SetDamage(this.strength);
         Rigidbody2D axeRb = handAxe.GetComponent<Rigidbody2D>();
         axeRb.velocity = throwDirection;
-
-        lastAttack = 0;
     }
 
     protected override void MoveTo(Vector3 direction)
     {
         direction = transform.position;
 
-        if (Input.GetKey(forwardKey))
+        if (Input.GetKey(forwardKey)) {
             direction += Vector3.up;
-        else if (Input.GetKey(leftKey))
+            this.spriteRenderer.flipX = false;
+        }
+        else if (Input.GetKey(leftKey)) {
             direction += Vector3.left;
-        else if (Input.GetKey(backKey))
+            this.spriteRenderer.flipX = true;
+        }
+        else if (Input.GetKey(backKey)) {
             direction += Vector3.down;
-        else if (Input.GetKey(rightKey))
+            this.spriteRenderer.flipX = false;
+        }
+        else if (Input.GetKey(rightKey)) {
             direction += Vector3.right;
+            this.spriteRenderer.flipX = false;
+        }
 
+        animator.SetBool("isRunning", direction != transform.position);
         transform.position = Vector2.MoveTowards(transform.position, direction, Time.deltaTime * speed);
     }
 
     public override void TakeDamage(int damage)
     {
         life -= damage;
+        lifeBar.GetComponent<LifeBar>().SetCurrentHealth(life);
+
+        if (life <= 0)
+            Die();
+    }
+
+    private void Die()
+    {
+        animator.SetTrigger("Dead");
+        this.GetComponent<Rigidbody2D>().Sleep();
+        this.boxCollider.enabled = false;
+        this.enabled = false;
     }
 
 

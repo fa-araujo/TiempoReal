@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Handaxe
   - charco
+  - Bomb
   layers:
   - Default
   - TransparentFX
@@ -46,12 +47,15 @@ TagManager:
   - name: Ground
     uniqueID: 2073124085
     locked: 0
-  - name: Player
-    uniqueID: 3559638951
+  - name: Enemies
+    uniqueID: 3671852405
     locked: 0
   - name: Objects
     uniqueID: 444669217
     locked: 0
-  - name: Enemies
-    uniqueID: 3671852405
+  - name: Player
+    uniqueID: 3559638951
+    locked: 0
+  - name: UI
+    uniqueID: 2597987673
     locked: 0
